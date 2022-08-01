@@ -35,9 +35,9 @@ jobs:
             beryju/authentik:${{ steps.ev.outputs.version }},
             beryju/authentik:${{ steps.ev.outputs.versionFamily }},
             beryju/authentik:latest,
-            ghcr.io/goauthentik/server:${{ steps.ev.outputs.version }},
-            ghcr.io/goauthentik/server:${{ steps.ev.outputs.versionFamily }},
-            ghcr.io/goauthentik/server:latest
+            ghcr.io/packtgoauthentik/server:${{ steps.ev.outputs.version }},
+            ghcr.io/packtgoauthentik/server:${{ steps.ev.outputs.versionFamily }},
+            ghcr.io/packtgoauthentik/server:latest
           platforms: linux/amd64,linux/arm64
           context: .
   build-outpost:
@@ -79,9 +79,9 @@ jobs:
             beryju/authentik-${{ matrix.type }}:${{ steps.ev.outputs.version }},
             beryju/authentik-${{ matrix.type }}:${{ steps.ev.outputs.versionFamily }},
             beryju/authentik-${{ matrix.type }}:latest,
-            ghcr.io/goauthentik/${{ matrix.type }}:${{ steps.ev.outputs.version }},
-            ghcr.io/goauthentik/${{ matrix.type }}:${{ steps.ev.outputs.versionFamily }},
-            ghcr.io/goauthentik/${{ matrix.type }}:latest
+            ghcr.io/packtgoauthentik/${{ matrix.type }}:${{ steps.ev.outputs.version }},
+            ghcr.io/packtgoauthentik/${{ matrix.type }}:${{ steps.ev.outputs.versionFamily }},
+            ghcr.io/packtgoauthentik/${{ matrix.type }}:latest
           file: ${{ matrix.type }}.Dockerfile
           platforms: linux/amd64,linux/arm64
   build-outpost-binary:
