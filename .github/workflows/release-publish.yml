@@ -1,8 +1,6 @@
 name: authentik-on-release
 
-on:
-  release:
-    types: [published, created]
+on: push
 
 jobs:
   build-server:
