@@ -16,7 +16,7 @@ jobs:
           image-names: dev-server,dev-ldap,dev-proxy
           cut-off: One week ago UTC
           account-type: org
-          org-name: goauthentik
+          org-name: PacktDev
           untagged-only: false
           token: ${{ secrets.GHCR_CLEANUP_TOKEN }}
           skip-tags: gh-next,gh-main
