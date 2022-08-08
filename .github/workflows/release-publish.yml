@@ -16,6 +16,7 @@ jobs:
         id: ev
       - name: Docker Login Registry
         uses: docker/login-action@v2
+        if: ${{ secrets.DOCKER_USERNAME !== '' }}
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
@@ -30,12 +31,20 @@ jobs:
         with:
           push: ${{ github.event_name == 'release' }}
           tags: |
-            beryju/authentik:${{ steps.ev.outputs.version }},
-            beryju/authentik:${{ steps.ev.outputs.versionFamily }},
-            beryju/authentik:latest,
-            ghcr.io/packtdev/authentik/server:${{ steps.ev.outputs.version }},
-            ghcr.io/packtdev/authentik/server:${{ steps.ev.outputs.versionFamily }},
-            ghcr.io/packtdev/authentik/server:latest
+            ghcr.io/${{ github.repository_owner }}/authentik/server:${{ steps.ev.outputs.version }},
+            ghcr.io/${{ github.repository_owner }}/authentik/server:${{ steps.ev.outputs.versionFamily }},
+            ghcr.io/${{ github.repository_owner }}/authentik/server:latest
+          platforms: linux/amd64,linux/arm64
+          context: .
+      - name: Building DockerHub Image
+        uses: docker/build-push-action@v3
+        if: ${{ secrets.DOCKER_USERNAME !== '' }}
+        with:
+          push: ${{ github.event_name == 'release' }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/authentik:${{ steps.ev.outputs.version }},
+            ${{ secrets.DOCKER_USERNAME }}/authentik:${{ steps.ev.outputs.versionFamily }},
+            ${{ secrets.DOCKER_USERNAME }}/authentik:latest,
           platforms: linux/amd64,linux/arm64
           context: .
   build-outpost:
@@ -59,6 +68,7 @@ jobs:
         uses: ./.github/actions/docker-push-variables
         id: ev
       - name: Docker Login Registry
+        if: ${{ secrets.DOCKER_USERNAME !== '' }}
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -74,12 +84,20 @@ jobs:
         with:
           push: ${{ github.event_name == 'release' }}
           tags: |
-            beryju/authentik-${{ matrix.type }}:${{ steps.ev.outputs.version }},
-            beryju/authentik-${{ matrix.type }}:${{ steps.ev.outputs.versionFamily }},
-            beryju/authentik-${{ matrix.type }}:latest,
-            ghcr.io/packtdev/authentik/${{ matrix.type }}:${{ steps.ev.outputs.version }},
-            ghcr.io/packtdev/authentik/${{ matrix.type }}:${{ steps.ev.outputs.versionFamily }},
-            ghcr.io/packtdev/authentik/${{ matrix.type }}:latest
+            ghcr.io/${{ github.repository_owner }}/authentik/${{ matrix.type }}:${{ steps.ev.outputs.version }},
+            ghcr.io/${{ github.repository_owner }}/authentik/${{ matrix.type }}:${{ steps.ev.outputs.versionFamily }},
+            ghcr.io/${{ github.repository_owner }}/authentik/${{ matrix.type }}:latest
+          file: ${{ matrix.type }}.Dockerfile
+          platforms: linux/amd64,linux/arm64
+      - name: Building DockerHub Image
+        uses: docker/build-push-action@v3
+        if: ${{ secrets.DOCKER_USERNAME !== '' }}
+        with:
+          push: ${{ github.event_name == 'release' }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/authentik:${{ steps.ev.outputs.version }},
+            ${{ secrets.DOCKER_USERNAME }}/authentik:${{ steps.ev.outputs.versionFamily }},
+            ${{ secrets.DOCKER_USERNAME }}/authentik:latest
           file: ${{ matrix.type }}.Dockerfile
           platforms: linux/amd64,linux/arm64
   build-outpost-binary:
@@ -150,12 +168,12 @@ jobs:
         id: ev
       - name: Get static files from docker image
         run: |
-          docker pull ghcr.io/goauthentik/server:latest
-          container=$(docker container create ghcr.io/goauthentik/server:latest)
+          docker pull ghcr.io/${{ github.repository_owner }}/server:latest
+          container=$(docker container create ghcr.io/${{ github.repository_owner }}/server:latest)
           docker cp ${container}:web/ .
       - name: Create a Sentry.io release
         uses: getsentry/action-release@v1
-        if: ${{ github.event_name == 'release' }}
+        if: ${{ github.event_name == 'release' && secrets.SENTRY_AUTH_TOKEN !== '' }}
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: beryjuorg

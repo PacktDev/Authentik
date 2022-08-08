@@ -9,6 +9,7 @@ jobs:
   clean-ghcr:
     name: Delete old unused container images
     runs-on: ubuntu-latest
+    if: ${{ secrets.GHCR_CLEANUP_TOKEN !== '' }}
     steps:
       - name: Delete 'dev' containers older than a week
         uses: sondrelg/container-retention-policy@v1
@@ -16,7 +17,7 @@ jobs:
           image-names: dev-server,dev-ldap,dev-proxy
           cut-off: One week ago UTC
           account-type: org
-          org-name: PacktDev
+          org-name: ${{ github.repository_owner }}
           untagged-only: false
           token: ${{ secrets.GHCR_CLEANUP_TOKEN }}
           skip-tags: gh-next,gh-main

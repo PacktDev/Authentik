@@ -85,9 +85,9 @@ jobs:
         with:
           push: ${{ steps.ev.outputs.shouldBuild == 'true' }}
           tags: |
-            ghcr.io/goauthentik/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.branchNameContainer }}
-            ghcr.io/goauthentik/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.branchNameContainer }}-${{ steps.ev.outputs.timestamp }}
-            ghcr.io/goauthentik/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.sha }}
+            ghcr.io/${{ github.repository_owner }}/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.branchNameContainer }}
+            ghcr.io/${{ github.repository_owner }}/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.branchNameContainer }}-${{ steps.ev.outputs.timestamp }}
+            ghcr.io/${{ github.repository_owner }}/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.sha }}
           file: ${{ matrix.type }}.Dockerfile
           build-args: |
             GIT_BUILD_HASH=${{ steps.ev.outputs.sha }}
