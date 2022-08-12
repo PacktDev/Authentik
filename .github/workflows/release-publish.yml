@@ -5,6 +5,9 @@ on: push
 jobs:
   build-server:
     runs-on: ubuntu-latest
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     steps:
       - uses: actions/checkout@v3
       - name: Set up QEMU
@@ -16,10 +19,10 @@ jobs:
         id: ev
       - name: Docker Login Registry
         uses: docker/login-action@v2
-        if: ( secrets.DOCKER_USERNAME !== '' )
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_PASSWORD != '' }}
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_PASSWORD }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -38,13 +41,13 @@ jobs:
           context: .
       - name: Building DockerHub Image
         uses: docker/build-push-action@v3
-        if: ( secrets.DOCKER_USERNAME !== '' )
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_PASSWORD != '' }}
         with:
           push: ${{ github.event_name == 'release' }}
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/authentik:${{ steps.ev.outputs.version }},
-            ${{ secrets.DOCKER_USERNAME }}/authentik:${{ steps.ev.outputs.versionFamily }},
-            ${{ secrets.DOCKER_USERNAME }}/authentik:latest,
+            ${{ env.DOCKERHUB_USERNAME }}/authentik:${{ steps.ev.outputs.version }},
+            ${{ env.DOCKERHUB_USERNAME }}/authentik:${{ steps.ev.outputs.versionFamily }},
+            ${{ env.DOCKERHUB_USERNAME }}/authentik:latest,
           platforms: linux/amd64,linux/arm64
           context: .
   build-outpost:
@@ -55,6 +58,9 @@ jobs:
         type:
           - proxy
           - ldap
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
@@ -68,11 +74,11 @@ jobs:
         uses: ./.github/actions/docker-push-variables
         id: ev
       - name: Docker Login Registry
-        if: ( secrets.DOCKER_USERNAME !== '' )
+        if: ${{ env.DOCKERHUB_USERNAME != '' }}
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_USERNAME }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -91,13 +97,13 @@ jobs:
           platforms: linux/amd64,linux/arm64
       - name: Building DockerHub Image
         uses: docker/build-push-action@v3
-        if: ( secrets.DOCKER_USERNAME !== '' )
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_PASSWORD != '' }}
         with:
           push: ${{ github.event_name == 'release' }}
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/authentik:${{ steps.ev.outputs.version }},
-            ${{ secrets.DOCKER_USERNAME }}/authentik:${{ steps.ev.outputs.versionFamily }},
-            ${{ secrets.DOCKER_USERNAME }}/authentik:latest
+            ${{ env.DOCKERHUB_USERNAME }}/authentik:${{ steps.ev.outputs.version }},
+            ${{ env.DOCKERHUB_USERNAME }}/authentik:${{ steps.ev.outputs.versionFamily }},
+            ${{ env.DOCKERHUB_USERNAME }}/authentik:latest
           file: ${{ matrix.type }}.Dockerfile
           platforms: linux/amd64,linux/arm64
   build-outpost-binary:
@@ -161,6 +167,12 @@ jobs:
       - build-outpost
       - build-outpost-binary
     runs-on: ubuntu-latest
+    env:
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+      SENTRY_URL: ${{ secrets.SENTRY_URL }}
+    if: ${{ github.event_name == 'release' && env.SENTRY_AUTH_TOKEN != '' && env.SENTRY_ORG != '' && env.SENTRY_PROJECT != '' && env.SENTRY_URL != '' }}
     steps:
       - uses: actions/checkout@v3
       - name: prepare variables
@@ -173,12 +185,6 @@ jobs:
           docker cp ${container}:web/ .
       - name: Create a Sentry.io release
         uses: getsentry/action-release@v1
-        if: ( github.event_name == 'release' && ${{ secrets.SENTRY_AUTH_TOKEN }} !== '' )
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: beryjuorg
-          SENTRY_PROJECT: authentik
-          SENTRY_URL: https://sentry.beryju.org
         with:
           version: authentik@${{ steps.ev.outputs.version }}
           environment: beryjuorg-prod
