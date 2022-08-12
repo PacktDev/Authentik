@@ -33,8 +33,8 @@ test:
 	coverage report
 
 lint-fix:
-	isort authentik tests lifecycle
-	black authentik tests lifecycle
+	isort authentik tests scripts lifecycle
+	black authentik tests scripts lifecycle
 	codespell -I .github/codespell-words.txt -S 'web/src/locales/**' -w \
 		authentik \
 		internal \
@@ -52,10 +52,11 @@ lint:
 i18n-extract: i18n-extract-core web-extract
 
 i18n-extract-core:
-	./manage.py makemessages --ignore web --ignore internal --ignore web --ignore web-api --ignore website -l en
+	ak makemessages --ignore web --ignore internal --ignore web --ignore web-api --ignore website -l en
 
 gen-build:
-	AUTHENTIK_DEBUG=true ./manage.py spectacular --file schema.yml
+	AUTHENTIK_DEBUG=true ak make_blueprint_schema > blueprints/schema.json
+	AUTHENTIK_DEBUG=true ak spectacular --file schema.yml
 
 gen-clean:
 	rm -rf web/api/src/
@@ -90,6 +91,9 @@ gen-client-go:
 		-c /local/config.yaml
 	go mod edit -replace goauthentik.io/api/v3=./gen-go-api
 	rm -rf config.yaml ./templates/
+
+gen-dev-config:
+	python -m scripts.generate_config
 
 gen: gen-build gen-clean gen-client-web
 
@@ -165,7 +169,16 @@ ci-pyright: ci--meta-debug
 	pyright e2e lifecycle
 
 ci-pending-migrations: ci--meta-debug
-	./manage.py makemigrations --check
+	ak makemigrations --check
 
 install: web-install website-install
 	poetry install
+
+dev-reset:
+	dropdb -U postgres -h localhost authentik
+	createdb -U postgres -h localhost authentik
+	redis-cli -n 0 flushall
+	redis-cli -n 1 flushall
+	redis-cli -n 2 flushall
+	redis-cli -n 3 flushall
+	make migrate

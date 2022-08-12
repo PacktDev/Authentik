@@ -4,11 +4,11 @@ from unittest.mock import PropertyMock, patch
 from django.db.models import Q
 from django.test import TestCase
 
+from authentik.blueprints.tests import apply_blueprint
 from authentik.core.models import Group, User
 from authentik.core.tests.utils import create_test_admin_user
 from authentik.events.models import Event, EventAction
 from authentik.lib.generators import generate_key
-from authentik.managed.manager import ObjectManager
 from authentik.sources.ldap.models import LDAPPropertyMapping, LDAPSource
 from authentik.sources.ldap.sync.groups import GroupLDAPSynchronizer
 from authentik.sources.ldap.sync.membership import MembershipLDAPSynchronizer
@@ -23,8 +23,8 @@ LDAP_PASSWORD = generate_key()
 class LDAPSyncTests(TestCase):
     """LDAP Sync tests"""
 
+    @apply_blueprint("blueprints/system/sources-ldap.yaml")
     def setUp(self):
-        ObjectManager().run()
         self.source: LDAPSource = LDAPSource.objects.create(
             name="ldap",
             slug="ldap",

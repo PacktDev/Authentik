@@ -2,6 +2,7 @@
 FROM --platform=${BUILDPLATFORM} docker.io/node:18 as website-builder
 
 COPY ./website /work/website/
+COPY ./blueprints /work/blueprints/
 
 ENV NODE_ENV=production
 WORKDIR /work/website
@@ -18,7 +19,7 @@ WORKDIR /work/web
 RUN npm ci && npm run build
 
 # Stage 3: Poetry to requirements.txt export
-FROM docker.io/python:3.10.5-slim-bullseye AS poetry-locker
+FROM docker.io/python:3.10.6-slim-bullseye AS poetry-locker
 
 WORKDIR /work
 COPY ./pyproject.toml /work
@@ -29,7 +30,7 @@ RUN pip install --no-cache-dir poetry && \
     poetry export -f requirements.txt --dev --output requirements-dev.txt
 
 # Stage 4: Build go proxy
-FROM docker.io/golang:1.18.4-bullseye AS builder
+FROM docker.io/golang:1.19.0-bullseye AS builder
 
 WORKDIR /work
 
@@ -45,7 +46,7 @@ COPY ./go.sum /work/go.sum
 RUN go build -o /work/authentik ./cmd/server/main.go
 
 # Stage 5: Run
-FROM docker.io/python:3.10.5-slim-bullseye
+FROM docker.io/python:3.10.6-slim-bullseye
 
 LABEL org.opencontainers.image.url https://goauthentik.io
 LABEL org.opencontainers.image.description goauthentik.io Main server image, see https://goauthentik.io for more info.
@@ -72,7 +73,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/ && \
     adduser --system --no-create-home --uid 1000 --group --home /authentik authentik && \
-    mkdir -p /certs /media && \
+    mkdir -p /certs /media /blueprints && \
     mkdir -p /authentik/.ssh && \
     chown authentik:authentik /certs /media /authentik/.ssh
 
@@ -81,13 +82,14 @@ COPY ./pyproject.toml /
 COPY ./xml /xml
 COPY ./tests /tests
 COPY ./manage.py /
+COPY ./blueprints /blueprints
 COPY ./lifecycle/ /lifecycle
 COPY --from=builder /work/authentik /authentik-proxy
 COPY --from=web-builder /work/web/dist/ /web/dist/
 COPY --from=web-builder /work/web/authentik/ /web/authentik/
 COPY --from=website-builder /work/website/help/ /website/help/
 
-USER authentik
+USER 1000
 
 ENV TMPDIR /dev/shm/
 ENV PYTHONUNBUFFERED 1
@@ -95,4 +97,4 @@ ENV PATH "/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin
 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 CMD [ "/lifecycle/ak", "healthcheck" ]
 
-ENTRYPOINT [ "/lifecycle/ak" ]
+ENTRYPOINT [ "/usr/local/bin/dumb-init", "--", "/lifecycle/ak" ]

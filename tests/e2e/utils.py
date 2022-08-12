@@ -6,11 +6,9 @@ from os import environ, makedirs
 from time import sleep, time
 from typing import Any, Callable, Optional
 
-from django.apps import apps
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.db import connection
 from django.db.migrations.loader import MigrationLoader
-from django.db.migrations.operations.special import RunPython
 from django.test.testcases import TransactionTestCase
 from django.urls import reverse
 from docker import DockerClient, from_env
@@ -28,7 +26,6 @@ from structlog.stdlib import get_logger
 from authentik.core.api.users import UserSerializer
 from authentik.core.models import User
 from authentik.core.tests.utils import create_test_admin_user
-from authentik.managed.manager import ObjectManager
 
 RETRIES = int(environ.get("RETRIES", "3"))
 
@@ -191,39 +188,6 @@ def get_loader():
     """Thin wrapper to lazily get a Migration Loader, only when it's needed
     and only once"""
     return MigrationLoader(connection)
-
-
-def apply_migration(app_name: str, migration_name: str):
-    """Re-apply migrations that create objects using RunPython before test cases"""
-
-    def wrapper_outter(func: Callable):
-        """Retry test multiple times"""
-
-        @wraps(func)
-        def wrapper(self: TransactionTestCase, *args, **kwargs):
-            migration = get_loader().get_migration(app_name, migration_name)
-            with connection.schema_editor() as schema_editor:
-                for operation in migration.operations:
-                    if not isinstance(operation, RunPython):
-                        continue
-                    operation.code(apps, schema_editor)
-            return func(self, *args, **kwargs)
-
-        return wrapper
-
-    return wrapper_outter
-
-
-def object_manager(func: Callable):
-    """Run objectmanager before a test function"""
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        """Run objectmanager before a test function"""
-        ObjectManager().run()
-        return func(*args, **kwargs)
-
-    return wrapper
 
 
 def retry(max_retires=RETRIES, exceptions=None):

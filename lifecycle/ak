@@ -29,7 +29,7 @@ function check_if_root {
     fi
     # Fix permissions of backups and media
     chown -R authentik:authentik /media /certs
-    chpst -u authentik:$GROUP env HOME=/authentik $1
+    exec chpst -u authentik:$GROUP env HOME=/authentik $1
 }
 
 MODE_FILE="/tmp/authentik-mode"
@@ -41,14 +41,14 @@ if [[ "$1" == "server" ]]; then
     if [[ ! -z "${AUTHENTIK_BOOTSTRAP_PASSWORD}" || ! -z "${AUTHENTIK_BOOTSTRAP_TOKEN}" ]]; then
         python -m manage bootstrap_tasks
     fi
-    /authentik-proxy
+    exec /authentik-proxy
 elif [[ "$1" == "worker" ]]; then
     wait_for_db
     echo "worker" > $MODE_FILE
     check_if_root "celery -A authentik.root.celery worker -Ofair --max-tasks-per-child=1 --autoscale 3,1 -E -B -s /tmp/celerybeat-schedule -Q authentik,authentik_scheduled,authentik_events"
 elif [[ "$1" == "bash" ]]; then
     /bin/bash
-elif [[ "$1" == "test" ]]; then
+elif [[ "$1" == "test-all" ]]; then
     pip install --no-cache-dir -r /requirements-dev.txt
     touch /unittest.xml
     chown authentik:authentik /unittest.xml
@@ -56,12 +56,14 @@ elif [[ "$1" == "test" ]]; then
 elif [[ "$1" == "healthcheck" ]]; then
     mode=$(cat $MODE_FILE)
     if [[ $mode == "server" ]]; then
-        curl --user-agent "goauthentik.io lifecycle Healthcheck" -I http://localhost:9000/-/health/ready/
+        exec curl --user-agent "goauthentik.io lifecycle Healthcheck" -I http://localhost:9000/-/health/ready/
     elif [[ $mode == "worker" ]]; then
-        celery -A authentik.root.celery inspect ping -d celery@$HOSTNAME --timeout 5 -j
+        exec celery -A authentik.root.celery inspect ping -d celery@$HOSTNAME --timeout 5 -j
     fi
 elif [[ "$1" == "dump_config" ]]; then
-    python -m authentik.lib.config
+    exec python -m authentik.lib.config
+elif [[ "$1" == "debug" ]]; then
+    exec sleep infinity
 else
-    python -m manage "$@"
+    exec python -m manage "$@"
 fi

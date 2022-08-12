@@ -3,7 +3,8 @@ from dataclasses import dataclass
 
 from django.core.cache import cache
 from django.db.models import Model
-from django.http.response import HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse
+from django.http.response import HttpResponseBadRequest
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
@@ -19,6 +20,8 @@ from rest_framework.viewsets import ModelViewSet
 from structlog.stdlib import get_logger
 
 from authentik.api.decorators import permission_required
+from authentik.blueprints.v1.exporter import Exporter
+from authentik.blueprints.v1.importer import Importer
 from authentik.core.api.used_by import UsedByMixin
 from authentik.core.api.utils import (
     CacheSerializer,
@@ -29,9 +32,6 @@ from authentik.core.api.utils import (
 from authentik.flows.exceptions import FlowNonApplicableException
 from authentik.flows.models import Flow
 from authentik.flows.planner import PLAN_CONTEXT_PENDING_USER, FlowPlanner, cache_key
-from authentik.flows.transfer.common import DataclassEncoder
-from authentik.flows.transfer.exporter import FlowExporter
-from authentik.flows.transfer.importer import FlowImporter
 from authentik.flows.views.executor import SESSION_KEY_HISTORY, SESSION_KEY_PLAN
 from authentik.lib.views import bad_request_message
 
@@ -163,12 +163,13 @@ class FlowViewSet(UsedByMixin, ModelViewSet):
     )
     @action(detail=False, methods=["POST"], parser_classes=(MultiPartParser,))
     def import_flow(self, request: Request) -> Response:
-        """Import flow from .akflow file"""
+        """Import flow from .yaml file"""
         file = request.FILES.get("file", None)
         if not file:
             return HttpResponseBadRequest()
-        importer = FlowImporter(file.read().decode())
-        valid = importer.validate()
+        importer = Importer(file.read().decode())
+        valid, _logs = importer.validate()
+        # TODO: return logs
         if not valid:
             return HttpResponseBadRequest()
         successful = importer.apply()
@@ -195,11 +196,11 @@ class FlowViewSet(UsedByMixin, ModelViewSet):
     @action(detail=True, pagination_class=None, filter_backends=[])
     # pylint: disable=unused-argument
     def export(self, request: Request, slug: str) -> Response:
-        """Export flow to .akflow file"""
+        """Export flow to .yaml file"""
         flow = self.get_object()
-        exporter = FlowExporter(flow)
-        response = JsonResponse(exporter.export(), encoder=DataclassEncoder, safe=False)
-        response["Content-Disposition"] = f'attachment; filename="{flow.slug}.akflow"'
+        exporter = Exporter(flow)
+        response = HttpResponse(content=exporter.export_to_string())
+        response["Content-Disposition"] = f'attachment; filename="{flow.slug}.yaml"'
         return response
 
     @extend_schema(responses={200: FlowDiagramSerializer()})

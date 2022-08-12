@@ -4,11 +4,11 @@ from base64 import b64encode
 from django.http.request import QueryDict
 from django.test import RequestFactory, TestCase
 
+from authentik.blueprints.tests import apply_blueprint
 from authentik.core.tests.utils import create_test_admin_user, create_test_cert, create_test_flow
 from authentik.crypto.models import CertificateKeyPair
 from authentik.events.models import Event, EventAction
 from authentik.lib.tests.utils import get_request
-from authentik.managed.manager import ObjectManager
 from authentik.providers.saml.models import SAMLPropertyMapping, SAMLProvider
 from authentik.providers.saml.processors.assertion import AssertionProcessor
 from authentik.providers.saml.processors.request_parser import AuthNRequestParser
@@ -74,8 +74,8 @@ qNAZMq1DqpibfCBg
 class TestAuthNRequest(TestCase):
     """Test AuthN Request generator and parser"""
 
+    @apply_blueprint("blueprints/system/providers-saml.yaml")
     def setUp(self):
-        ObjectManager().run()
         cert = create_test_cert()
         self.provider: SAMLProvider = SAMLProvider.objects.create(
             authorization_flow=create_test_flow(),

@@ -20,11 +20,15 @@
     "todo-tree.tree.showCountsInTree": true,
     "todo-tree.tree.showBadges": true,
     "python.formatting.provider": "black",
-    "files.associations": {
-        "*.akflow": "json"
-    },
+    "yaml.customTags": [
+        "!Find sequence",
+        "!KeyOf scalar"
+    ],
     "typescript.preferences.importModuleSpecifier": "non-relative",
     "typescript.preferences.importModuleSpecifierEnding": "index",
     "typescript.tsdk": "./web/node_modules/typescript/lib",
-    "typescript.enablePromptUseWorkspaceTsdk": true
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "yaml.schemas": {
+        "./blueprints/schema.json": "blueprints/**/*.yaml"
+    }
 }

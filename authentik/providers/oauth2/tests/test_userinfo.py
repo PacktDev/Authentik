@@ -4,11 +4,11 @@ from dataclasses import asdict
 
 from django.urls import reverse
 
+from authentik.blueprints.tests import apply_blueprint
 from authentik.core.models import Application
 from authentik.core.tests.utils import create_test_admin_user, create_test_cert, create_test_flow
 from authentik.events.models import Event, EventAction
 from authentik.lib.generators import generate_id, generate_key
-from authentik.managed.manager import ObjectManager
 from authentik.providers.oauth2.models import IDToken, OAuth2Provider, RefreshToken, ScopeMapping
 from authentik.providers.oauth2.tests.utils import OAuthTestCase
 
@@ -16,9 +16,9 @@ from authentik.providers.oauth2.tests.utils import OAuthTestCase
 class TestUserinfo(OAuthTestCase):
     """Test token view"""
 
+    @apply_blueprint("blueprints/system/providers-oauth2.yaml")
     def setUp(self) -> None:
         super().setUp()
-        ObjectManager().run()
         self.app = Application.objects.create(name=generate_id(), slug=generate_id())
         self.provider: OAuth2Provider = OAuth2Provider.objects.create(
             name=generate_id(),

@@ -8,7 +8,7 @@ from channels.middleware import BaseMiddleware
 from channels_redis.core import ChannelFull
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation, ValidationError
-from django.db import InternalError, OperationalError, ProgrammingError
+from django.db import DatabaseError, InternalError, OperationalError, ProgrammingError
 from django.http.response import Http404
 from django_redis.exceptions import ConnectionInterrupted
 from docker.errors import DockerException
@@ -87,10 +87,6 @@ def sentry_init(**sentry_init_kwargs):
     set_tag("authentik.build_hash", get_build_hash("tagged"))
     set_tag("authentik.env", get_env())
     set_tag("authentik.component", "backend")
-    LOGGER.info(
-        "Error reporting is enabled",
-        env=kwargs["environment"],
-    )
 
 
 def traces_sampler(sampling_context: dict) -> float:
@@ -116,6 +112,7 @@ def before_send(event: dict, hint: dict) -> Optional[dict]:
         # Django Errors
         Error,
         ImproperlyConfigured,
+        DatabaseError,
         OperationalError,
         InternalError,
         ProgrammingError,
