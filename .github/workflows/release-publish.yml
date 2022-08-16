@@ -10,6 +10,10 @@ jobs:
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     steps:
       - uses: actions/checkout@v3
+      - uses: ASzc/change-string-case-action@v1
+        id: repo_owner
+        with:
+          string: ${{ github.repository_owner }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2.0.0
       - name: Set up Docker Buildx
@@ -27,16 +31,16 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          username: ${{ steps.repo_owner.outputs.lowercase }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Building Docker Image
         uses: docker/build-push-action@v3
         with:
           push: ${{ github.event_name == 'release' }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/authentik/server:${{ steps.ev.outputs.version }},
-            ghcr.io/${{ github.repository_owner }}/authentik/server:${{ steps.ev.outputs.versionFamily }},
-            ghcr.io/${{ github.repository_owner }}/authentik/server:latest
+            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/authentik/server:${{ steps.ev.outputs.version }},
+            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/authentik/server:${{ steps.ev.outputs.versionFamily }},
+            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/authentik/server:latest
           platforms: linux/amd64,linux/arm64
           context: .
       - name: Building DockerHub Image
@@ -63,6 +67,10 @@ jobs:
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     steps:
       - uses: actions/checkout@v3
+      - uses: ASzc/change-string-case-action@v1
+        id: repo_owner
+        with:
+          string: ${{ github.repository_owner }}
       - uses: actions/setup-go@v3
         with:
           go-version: "^1.17"
@@ -83,16 +91,16 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          username: ${{ steps.repo_owner.outputs.lowercase }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Building Docker Image
         uses: docker/build-push-action@v3
         with:
           push: ${{ github.event_name == 'release' }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/authentik/${{ matrix.type }}:${{ steps.ev.outputs.version }},
-            ghcr.io/${{ github.repository_owner }}/authentik/${{ matrix.type }}:${{ steps.ev.outputs.versionFamily }},
-            ghcr.io/${{ github.repository_owner }}/authentik/${{ matrix.type }}:latest
+            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/authentik/${{ matrix.type }}:${{ steps.ev.outputs.version }},
+            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/authentik/${{ matrix.type }}:${{ steps.ev.outputs.versionFamily }},
+            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/authentik/${{ matrix.type }}:latest
           file: ${{ matrix.type }}.Dockerfile
           platforms: linux/amd64,linux/arm64
       - name: Building DockerHub Image
@@ -174,13 +182,17 @@ jobs:
       SENTRY_URL: ${{ secrets.SENTRY_URL }}
     steps:
       - uses: actions/checkout@v3
+      - uses: ASzc/change-string-case-action@v1
+        id: repo_owner
+        with:
+          string: ${{ github.repository_owner }}
       - name: prepare variables
         uses: ./.github/actions/docker-push-variables
         id: ev
       - name: Get static files from docker image
         run: |
-          docker pull ghcr.io/${{ github.repository_owner }}/server:latest
-          container=$(docker container create ghcr.io/${{ github.repository_owner }}/server:latest)
+          docker pull ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/server:latest
+          container=$(docker container create ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/server:latest)
           docker cp ${container}:web/ .
       - name: Create a Sentry.io release
         if: ${{ github.event_name == 'release' && env.SENTRY_AUTH_TOKEN != '' && env.SENTRY_ORG != '' && env.SENTRY_PROJECT != '' && env.SENTRY_URL != '' }}
