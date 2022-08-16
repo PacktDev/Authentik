@@ -62,6 +62,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: ASzc/change-string-case-action@v1
+        id: repo_owner
+        with:
+          string: ${{ github.repository_owner }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2.0.0
       - name: Set up Docker Buildx
@@ -76,7 +80,7 @@ jobs:
         if: ${{ steps.ev.outputs.shouldBuild == 'true' }}
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          username: ${{ steps.repo_owner.outputs.lowercase }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate API
         run: make gen-client-go
@@ -85,9 +89,9 @@ jobs:
         with:
           push: ${{ steps.ev.outputs.shouldBuild == 'true' }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.branchNameContainer }}
-            ghcr.io/${{ github.repository_owner }}/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.branchNameContainer }}-${{ steps.ev.outputs.timestamp }}
-            ghcr.io/${{ github.repository_owner }}/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.sha }}
+            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.branchNameContainer }}
+            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.branchNameContainer }}-${{ steps.ev.outputs.timestamp }}
+            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.sha }}
           file: ${{ matrix.type }}.Dockerfile
           build-args: |
             GIT_BUILD_HASH=${{ steps.ev.outputs.sha }}
