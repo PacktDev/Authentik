@@ -233,8 +233,8 @@ jobs:
         with:
           push: ${{ steps.ev.outputs.shouldBuild == 'true' }}
           tags: |
-            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/dev-server:gh-${{ steps.ev.outputs.branchNameContainer }}
-            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/dev-server:gh-${{ steps.ev.outputs.branchNameContainer }}-${{ steps.ev.outputs.timestamp }}-${{ steps.ev.outputs.sha }}
+            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/authentik:develop
+            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/authentik:${{ steps.ev.outputs.sha }}
           build-args: |
             GIT_BUILD_HASH=${{ steps.ev.outputs.sha }}
             VERSION_FAMILY=${{ steps.ev.outputs.versionFamily }}

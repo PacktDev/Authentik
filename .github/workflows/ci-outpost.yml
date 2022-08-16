@@ -89,9 +89,8 @@ jobs:
         with:
           push: ${{ steps.ev.outputs.shouldBuild == 'true' }}
           tags: |
-            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.branchNameContainer }}
-            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.branchNameContainer }}-${{ steps.ev.outputs.timestamp }}
-            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/dev-${{ matrix.type }}:gh-${{ steps.ev.outputs.sha }}
+            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/${{ matrix.type }}:develop
+            ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/${{ matrix.type }}:${{ steps.ev.outputs.sha }}
           file: ${{ matrix.type }}.Dockerfile
           build-args: |
             GIT_BUILD_HASH=${{ steps.ev.outputs.sha }}
