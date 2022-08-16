@@ -97,6 +97,8 @@ jobs:
             GIT_BUILD_HASH=${{ steps.ev.outputs.sha }}
             VERSION_FAMILY=${{ steps.ev.outputs.versionFamily }}
           platforms: ${{ matrix.arch }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
   build-outpost-binary:
     timeout-minutes: 120
     needs:
