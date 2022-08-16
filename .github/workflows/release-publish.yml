@@ -181,6 +181,7 @@ jobs:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
       SENTRY_URL: ${{ secrets.SENTRY_URL }}
+    if: ${{ github.event_name == 'release' }}
     steps:
       - uses: actions/checkout@v3
       - uses: ASzc/change-string-case-action@v1
@@ -190,13 +191,19 @@ jobs:
       - name: prepare variables
         uses: ./.github/actions/docker-push-variables
         id: ev
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ steps.repo_owner.outputs.lowercase }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Get static files from docker image
         run: |
           docker pull ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/server:latest
           container=$(docker container create ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/server:latest)
           docker cp ${container}:web/ .
       - name: Create a Sentry.io release
-        if: ${{ github.event_name == 'release' && env.SENTRY_AUTH_TOKEN != '' && env.SENTRY_ORG != '' && env.SENTRY_PROJECT != '' && env.SENTRY_URL != '' }}
+        if: ${{ env.SENTRY_AUTH_TOKEN != '' && env.SENTRY_ORG != '' && env.SENTRY_PROJECT != '' && env.SENTRY_URL != '' }}
         uses: getsentry/action-release@v1
         with:
           version: authentik@${{ steps.ev.outputs.version }}
