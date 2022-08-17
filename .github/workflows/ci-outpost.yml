@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ASzc/change-string-case-action@v1
+      - uses: ASzc/change-string-case-action@v2
         id: repo_owner
         with:
           string: ${{ github.repository_owner }}
