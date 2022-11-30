@@ -10,7 +10,7 @@ jobs:
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     steps:
       - uses: actions/checkout@v3
-      - uses: ASzc/change-string-case-action@v1
+      - uses: ASzc/change-string-case-action@v2
         id: repo_owner
         with:
           string: ${{ github.repository_owner }}
@@ -71,7 +71,7 @@ jobs:
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     steps:
       - uses: actions/checkout@v3
-      - uses: ASzc/change-string-case-action@v1
+      - uses: ASzc/change-string-case-action@v2
         id: repo_owner
         with:
           string: ${{ github.repository_owner }}
@@ -192,7 +192,7 @@ jobs:
     if: ${{ github.event_name == 'release' }}
     steps:
       - uses: actions/checkout@v3
-      - uses: ASzc/change-string-case-action@v1
+      - uses: ASzc/change-string-case-action@v2
         id: repo_owner
         with:
           string: ${{ github.repository_owner }}
